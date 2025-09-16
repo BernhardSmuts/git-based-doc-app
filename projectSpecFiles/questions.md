@@ -114,76 +114,129 @@ Based on the projectSpecs.md, here are deeper technical questions that need clar
 ### UUID & Content Management
 
 13. **UUID Scope & Collision**: How should UUID generation work?
+
     - Generated client-side or server-side?
+      - Client side geenration can be done each time an element is added or edited as an edited element will have a different UUID compared to it's original
     - What happens if two editors create content simultaneously?
+      - When they submit, it will show as two seperate pull requests, the manager will decide which to merge
+      - The manage should be able to see then in chronological order and decide how to approve them
     - Should UUIDs be human-readable in any way for debugging?
+      - No, they can be standard style UUIDs, but there should be a section where you can see the element, component or section based on a UUID (Essentially a UUID lookup)
 
 14. **Content Reuse Mechanics**: When an element is referenced in multiple places:
+
     - How does editing work? (Edit source and all references update?)
+      - When you edit the element it's essentially change as the source of truth, all references to this is then also pointing to the new source of truth
+      - The structure of how this happens should be fleshed out as if an element is referenced by a lot of other components/sections, this could couse a complex sequence of updates and modifications.
+      - So maybe the refernce can be done on a certain section of the UUID and the version of that element can be controlled by a differenct section of the UUID
     - Can references have different styling/context?
+      - Not sure what you mean by this, ellaborate on the question
     - What happens if someone tries to edit a referenced element?
+      - The edit will take place on that single source of truth and the refernce is updated to point to this new updated single source of truth
 
 15. **JSON Structure Storage**: Where and how is the JSON tree stored?
     - As part of git repository in special files?
+      - There will be a data layer
+      - For now this can maybe just be mocked using local storage
+      - Some of the docs could be restricted information, so online storage could be questionable and maybe a self hosted supabase would work. But this can be explored later
     - Separate database alongside git?
+      - As discussed above
     - How do you handle large documents with thousands of UUIDs?
+      We'll have to find a way to manage this still, I'm not sure
 
 ### Git Integration Details
 
 16. **Branch Management**: For the username-based branches:
+
     - What if a user has multiple pending edits?
+      - Just use the username datestamp layout Jake202509161212 (UsernameYYYYMMDDHHSS )
     - How do you handle branch naming conflicts (special characters in usernames)?
+      - This should not be an issue using the above mentioned method
     - When are branches cleaned up after merge/rejection?
+      - They are not essentially branches, they will more be stored as diffs linked to the master branch, so instead of thinking about it as a completed branch, it's more a diff off of the master branch
 
 17. **Merge Conflicts**: What happens when:
+
     - Two editors modify the same element simultaneously?
+      - When they submit the pull request of the diffs the manager will see them in chronoligical order and then select which one he wants to work on first, after he has merged the one, he can start with the second one as if they were sent days after eachother, this will be an edgecase to have changes so close together on the same elements
     - Manager approves one change but another editor has a pending change to same content?
+      - The changes the manager approves are merged, then if the next changes reference the old version it can simply show how it would fit into the newly merged content
     - Git merge conflicts occur at the technical level?
+      - I'm not sure what you mean, elaborate more on this question
 
 18. **Git Repository Structure**: How should the repo be organized?
     - Separate files per document/section/component?
+      - For now it can just be one monorepo (large) style document
     - Single large JSON file with all content?
+      - Yes
     - Mix of content files + structure files?
+      - No - The idea is to have a single source of truth that does not get damaged
 
 ### WYSIWYG Editor Integration
 
 19. **Editor Boundaries**: In edit mode:
+
     - Can users edit across section boundaries?
+      - Not sure what you mean by this
+      - A user edits the elements of a section/component and these elements are presented as diffs for the manager to apporve or deny
+      - Multiple sections and components can reference the same element, but where this element is changed, all the references change to the new element
+        - An example of this would be where the take off is discribed. Some elements of this description will be used for various types of take offs, if the single source of truth for how to power up for the take off is changed, then all the components that referenced this element of how to power up for the take off will be updated to point to the new reference for the take off
     - How do you prevent users from breaking the atomic structure?
+      - There is always only one single source of truth
+      - The web-app must manage the atomic structure
     - What happens if someone deletes a UUID reference accidentally?
+      - Users will not have access to edit or delete UUID refernces or change anything on the reference tree, this will all be system controlled
 
 20. **Real-time Collaboration**: While editing:
     - Can multiple editors work on same document simultaneously?
+      - Essentially the whole app is a single document
+      - Users draw data from the server and send edits to the server, but there is no need to build in realtime collaboration
     - How do you handle live updates and conflicts?
+      - As discussed above
     - Should there be locking mechanisms?
+      - No
 
 ### Data Consistency & Performance
 
 21. **Checksum Calculation**: For version control:
+
     - What level of granularity for checksums (document, section, element)?
+      - Good enough to make sure versions are up to date
     - How often are checksums calculated?
+      - There can be a TTL of 7 days and a "check version" prompt from the user to run the checksum, then compare it to the online (source of truth version)
     - What's included in checksum calculation (content + structure + metadata)?
+      - Whatever is needed to manage the checksum properly. UUIDs should be good enough
 
 22. **Offline Sync Edge Cases**: When coming back online:
     - What if local changes conflict with approved changes made while offline?
+      - The changes should only be able to be merged when there is an internet connection
     - How do you handle partial sync failures?
+      - No offline merge
     - Should there be a "sync queue" for offline actions?
+      - No
 
 ### User Experience Edge Cases
 
 23. **Approval Workflow Edge Cases**:
+
     - Can an editor cancel their own pending changes?
+      - Yes
     - What if a manager wants to edit someone else's pending change before approval?
+      - They can approve the edit, then edit it as their own edit, this keeps the app more simple
     - Should there be a "request changes" option (like GitHub) vs just approve/reject?
+      - No, essentially the reject with a message is a request changes request
 
 24. **Content Dependencies**: If Element A references Element B:
     - What happens if Element B gets rejected while Element A is pending?
+      - The ****************\*\*****************
+      ***
     - How do you visualize these dependencies to managers during approval?
     - Should changes to referenced content trigger re-review of dependent content?
 
 ### Search & Tag Architecture
 
 25. **Tag Management**: For the manual tagging system:
+
     - Who can create new tags vs use existing ones?
     - How do you prevent tag proliferation/inconsistency?
     - Should there be tag synonyms or tag hierarchies?
@@ -196,6 +249,7 @@ Based on the projectSpecs.md, here are deeper technical questions that need clar
 ### Authentication & Security
 
 27. **User Management**: How should user accounts work?
+
     - Integration with existing company systems (LDAP, etc.)?
     - Role assignment mechanism?
     - User account lifecycle (deactivation, role changes)?
